@@ -11,7 +11,9 @@
                 <div class="row">
                         <InputText :model="nameInputTextModel"></InputText>
                 </div>
-                 <b-button variant="success" :disabled="invalid">Ajouter</b-button>
+                 <div class="row">
+                    <b-button variant="success" :disabled="invalid">Ajouter</b-button>
+                 </div>
             </b-form>
         </validation-observer>
     </div>
