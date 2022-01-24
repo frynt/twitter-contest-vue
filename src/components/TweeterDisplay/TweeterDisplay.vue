@@ -1,5 +1,6 @@
 <template>
   <div   
+    v-on:click="tweeterDisplayClicked()"
     class="rounded tweeterDisplay"      
     v-bind:class="{ 
       'btn': !tweeterDisplayModel.hasResponse, 
@@ -32,6 +33,10 @@ import { TweeterDisplayModel } from './TweeterDisplayModel';
 @Component
 export default class TweeterDisplay extends Vue {
   @Prop() private tweeterDisplayModel!: TweeterDisplayModel;
+
+  tweeterDisplayClicked() {
+    this.$emit("clicked");
+  }
 }
 </script>
 
