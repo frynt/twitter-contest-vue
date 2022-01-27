@@ -4,7 +4,7 @@
             <router-link to="/admin/tweeter" class="text-dark">Liste des tweeters</router-link>
         </div>
         <validation-observer v-slot="{ invalid }">
-            <b-form>
+            <b-form @submit="onSubmit">
                 <div class="row">
                         <InputText :model="usernameInputTextModel"></InputText>
                 </div>
@@ -12,7 +12,7 @@
                         <InputText :model="nameInputTextModel"></InputText>
                 </div>
                  <div class="row">
-                    <b-button variant="success" :disabled="invalid">Ajouter</b-button>
+                    <b-button type="submit" variant="success" :disabled="invalid">Ajouter</b-button>
                  </div>
             </b-form>
         </validation-observer>
@@ -25,6 +25,7 @@ import { extend, setInteractionMode, } from 'vee-validate';
 import { required } from 'vee-validate/dist/rules'
 import { InputTextModel } from '@/components/form/input-text/InputTextModel';
 import { ValidationObserver } from 'vee-validate';
+import axios from 'axios';
 
 setInteractionMode('aggressive')
 extend('required', {
@@ -51,6 +52,20 @@ export default class TweeterAdd extends Vue {
 
     constructor() {
         super();
+    }
+
+    async onSubmit() {
+        try {
+            const result: any = await axios
+            .post('https://localhost:7064/api/tweeters/twitter', {
+                username: this.usernameInputTextModel.value,
+                name: this.nameInputTextModel.value
+            });
+            alert(result.data.id);
+        } catch (error) {
+            console.error(error);
+            alert("Une erreur est survenue");
+        }
     }
 }
 </script>
