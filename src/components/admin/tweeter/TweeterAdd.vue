@@ -11,9 +11,13 @@
                 <div class="row">
                         <InputText :model="nameInputTextModel"></InputText>
                 </div>
-                 <div class="row">
+                <div class="row">
                     <b-button type="submit" variant="success" :disabled="invalid">Ajouter</b-button>
-                 </div>
+                </div>
+                <div class="row">
+                    <p class="text-danger" v-if="errorMessage">{{errorMessage}}</p>
+                    <p class="text-success" v-if="successMessage">{{successMessage}}</p>
+                </div>
             </b-form>
         </validation-observer>
     </div>
@@ -50,22 +54,49 @@ export default class TweeterAdd extends Vue {
         label: "Name"
     };
 
+    private errorMessage: string = "";
+    private successMessage: string = "";
+
     constructor() {
         super();
     }
 
     async onSubmit() {
-        try {
-            const result: any = await axios
-            .post('https://localhost:7064/api/tweeters/twitter', {
-                username: this.usernameInputTextModel.value,
-                name: this.nameInputTextModel.value
-            });
-            alert(result.data.id);
-        } catch (error) {
-            console.error(error);
-            alert("Une erreur est survenue");
-        }
+        this.errorMessage = "";
+        this.successMessage = "";
+        // axios.interceptors.response.use((response) => {
+        //     return response;
+        //     }, function (error) {
+        //         return Promise.reject(error);
+        // });
+        // try {
+        //     await axios
+        //     .post('https://localhost:7064/api/tweeters/twitter', {
+        //         username: this.usernameInputTextModel.value,
+        //         name: this.nameInputTextModel.value
+        //     });
+        //     this.successMessage = "Le tweeter a bien été ajouté";
+        // } catch (error: any) {
+        //     console.log(error);
+        //     // eslint-disable-next-line no-debugger
+        //     debugger;
+
+        // }
+        
+        axios.post('https://localhost:7064/api/tweeters/twitter', {
+            username: this.usernameInputTextModel.value,
+            name: this.nameInputTextModel.value
+        })
+        .then(() => { 
+            this.successMessage = "Le tweeter a bien été ajouté";
+        })
+        .catch((error: any) => {
+            if (error.response.data.error) {
+                this.errorMessage = error.response.data.error;
+            } else {
+                this.errorMessage = "Une erreur est survenue";
+            }
+        });
     }
 }
 </script>
