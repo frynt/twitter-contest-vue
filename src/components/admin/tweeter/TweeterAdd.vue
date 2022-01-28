@@ -30,6 +30,7 @@ import { required } from 'vee-validate/dist/rules'
 import { InputTextModel } from '@/components/form/input-text/InputTextModel';
 import { ValidationObserver } from 'vee-validate';
 import axios from 'axios';
+import thejson from '@/assets/config.json';
 
 setInteractionMode('aggressive')
 extend('required', {
@@ -82,8 +83,7 @@ export default class TweeterAdd extends Vue {
         //     debugger;
 
         // }
-        
-        axios.post('https://localhost:7064/api/tweeters/twitter', {
+        axios.post(`${thejson.api_url}/tweeters/twitter`, {
             username: this.usernameInputTextModel.value,
             name: this.nameInputTextModel.value
         })
