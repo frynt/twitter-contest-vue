@@ -3,15 +3,24 @@
         <div class="row">
             <router-link to="tweeter/add"  class="text-dark">Ajouter</router-link>
         </div>
-        <div class="row">
+        <div class="row d-fle justify-content-center align-items-center">
             <b-pagination
-            v-model="currentPage"
-            :total-rows="totalCount"
-            :per-page="pageSize"
-            aria-controls="my-table"
-            @change="handlePageChange"
+                class="col-7"
+                v-model="currentPage"
+                :total-rows="totalCount"
+                :per-page="pageSize"
+                @change="handlePageChange"
             ></b-pagination>
-            <p class="mt-3">Current Page: {{ currentPage }}</p>
+            <div class="mb-3 col-5">
+                Nombre d'élements par page
+                <select v-model="pageSize" @change="handlePageSizeChange($event)">
+                    <option v-for="size in pageSizes" :key="size" :value="size">
+                        {{ size }}
+                    </option>
+                </select>
+            </div>
+        </div>
+        <div class="row">
             <b-table striped hover :items="items" :fields="fields" id="my-table">
                 <template #cell(name)="data">
                     {{ data.value }}
@@ -42,12 +51,12 @@ export default class TweeterList extends Vue {
     private pageSize =  5;
     private currentPage = 1;
     private totalCount = 0;
+    private pageSizes = [5,10,15,20];
 
     private async initItems() {
         try {
             const itemsResponse =  await axios.get(`${thejson.api_url}/tweeters?pageNumber=${this.currentPage}&pageSize=${this.pageSize}`);
             this.items = itemsResponse.data;
-            console.log(itemsResponse.headers);
             this.totalCount = JSON.parse(itemsResponse.headers['paging-headers'])['totalCount'];
         } catch(error) {
             console.error(error);
@@ -61,6 +70,10 @@ export default class TweeterList extends Vue {
     handlePageChange(value: number) {
       this.currentPage = value;
       this.initItems();
+    }
+
+    handlePageSizeChange() {
+        this.initItems();
     }
 }
 
