@@ -1,9 +1,9 @@
 export interface TweeterDisplayModel {
     user: {
         name: string;
-        profileImageURL: string;
+        profilePictureURL: string;
     };
-    likes: number;
+    likes: number | null;
     isSuccess: boolean;
     hasResponse: boolean;
 }

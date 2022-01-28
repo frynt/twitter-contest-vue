@@ -38,7 +38,7 @@
 <script lang="ts">
 import axios from 'axios';
 import { Component, Vue } from 'vue-property-decorator';
-import thejson from '@/assets/config.json';
+import config from '@/assets/config.json';
 
 @Component
 export default class TweeterList extends Vue {
@@ -55,7 +55,7 @@ export default class TweeterList extends Vue {
 
     private async initItems() {
         try {
-            const itemsResponse =  await axios.get(`${thejson.api_url}/tweeters?pageNumber=${this.currentPage}&pageSize=${this.pageSize}`);
+            const itemsResponse =  await axios.get(`${config.api_url}/tweeters?pageNumber=${this.currentPage}&pageSize=${this.pageSize}`);
             this.items = itemsResponse.data;
             this.totalCount = JSON.parse(itemsResponse.headers['paging-headers'])['totalCount'];
         } catch(error) {
@@ -80,7 +80,8 @@ export default class TweeterList extends Vue {
 interface Tweeter {
     id: string,
     username: string,
-    profilePictureURL: string
+    profilePictureURL: string,
+    name: string
 }
 </script>
 

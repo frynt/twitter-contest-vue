@@ -17,7 +17,7 @@
     </div>
     <div class="row  align-items-center">
       <div class="col-12 text-center">
-        <img v-bind:src="tweeterDisplayModel.user.profileImageURL" />
+        <img v-bind:src="tweeterDisplayModel.user.profilePictureURL" />
         <h5 class="mt-3" v-if="tweeterDisplayModel.hasResponse" >
           <span class="badge badge-info"> {{ tweeterDisplayModel.likes }} likes</span>
         </h5>
