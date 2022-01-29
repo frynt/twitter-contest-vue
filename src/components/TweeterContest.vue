@@ -11,7 +11,7 @@
       <div 
         class="userDisplayContainer col-4 p-3"
         v-on:click="tweeterDisplayAClicked()">
-        <TweeterDisplay :tweeterDisplayModel="tweeterDisplayModelA"></TweeterDisplay>
+        <TweeterDisplay v-if="tweeterDisplayModelA" :tweeterDisplayModel="tweeterDisplayModelA"></TweeterDisplay>
       </div>
       <div class="col-4 text-center">
         <h1 v-if="isDisplayOr">ou</h1>
@@ -24,19 +24,23 @@
       <div 
         class="tweeterDisplayContainer col-4 p-3"
         v-on:click="tweeterDisplayBClicked()">
-        <TweeterDisplay :tweeterDisplayModel="tweeterDisplayModelB"></TweeterDisplay>
+        <TweeterDisplay v-if="tweeterDisplayModelB" :tweeterDisplayModel="tweeterDisplayModelB"></TweeterDisplay>
       </div>
     </div>
       <div class="row mt-4">
       <div class="col-3"></div>
       <div class="col-6">
-        <b-progress :value="25" :variant="'info'" show-progress animated></b-progress>
+        <b-progress 
+        :variant="'info'" show-progress 
+        animated>
+        <b-progress-bar :value="progressBarValue" :label="`${progressBarValue.toFixed(0)}%`"></b-progress-bar>
+        </b-progress>
       </div>
       <div class="col-3"></div>
     </div>
     <div class="row">
       <div class="col-12 text-center">
-        40 duels restants
+        {{remainingDuels}} duels à suivre
       </div>
     </div>
   </div>
@@ -55,33 +59,16 @@ import axios from 'axios';
   },
 })
 export default class App extends Vue {
-  tweeterDisplayModelA!: TweeterDisplayModel;
-  tweeterDisplayModelB!: TweeterDisplayModel;
+  tweeterDisplayModelA: TweeterDisplayModel | null = null;
+  tweeterDisplayModelB: TweeterDisplayModel | null = null;
   isDisplayOr = true;
   isUserDisplayHasResponse: boolean = false;
   isDisplayWin = false;
   contest: Contest | null = null;
+  duel: Duel | null = null;
 
   constructor() {
     super();
-    this.tweeterDisplayModelA = {
-      user: {
-        name: "Emmanuel Macron",
-        profilePictureURL: "https://pbs.twimg.com/profile_images/1308812357502668812/jSVlszOa_normal.jpg"
-      },
-      likes: 1500,
-      isSuccess: false,
-      hasResponse: false
-    }
-    this.tweeterDisplayModelB = {
-      user: {
-        name: "Britney Spears",
-        profilePictureURL: "https://pbs.twimg.com/profile_images/1323418800876777474/0w4orMOC_normal.jpg"
-      },
-      likes: 500,
-      isSuccess: false,
-      hasResponse: false
-    }
   }
 
     async mounted() {
@@ -118,13 +105,15 @@ export default class App extends Vue {
   
   async initNextDuel(): Promise<void> {
       if (this.contest?.nextDuelsIds.length === 0) {
-          alert('fini !')
+          localStorage.removeItem('contestId');
+          alert('Vous avez terminé !')
+          window.location.reload();
       }
       try {
-          const duel: Duel =  (await axios.get(`${config.api_url}/duels/${this.contest?.nextDuelsIds[0]}`)).data;
+          this.duel =  (await axios.get(`${config.api_url}/duels/${this.contest?.nextDuelsIds[0]}`)).data;
           const [tweeterAResponse, tweeterBResponse] = await Promise.all([
-             axios.get(`${config.api_url}/tweeters/${duel.proposalTweeterAId}`),
-             axios.get(`${config.api_url}/tweeters/${duel.proposalTweeterBId}`)
+             axios.get(`${config.api_url}/tweeters/${this.duel!.proposalTweeterAId}`),
+             axios.get(`${config.api_url}/tweeters/${this.duel!.proposalTweeterBId}`)
           ]);
           const tweeterA: Tweeter = tweeterAResponse.data;
           const tweeterB: Tweeter = tweeterBResponse.data;
@@ -147,32 +136,62 @@ export default class App extends Vue {
       }
   }
 
-  tweeterDisplayAClicked() {
-   this._userDisplayPostClick();
-   this.isDisplayWin = true;
+  async tweeterDisplayAClicked() {
+    try {
+      const duel: Duel =  (await axios.patch(`${config.api_url}/duels/${this.duel!.id}`, {UserProposalTweeterId : this.tweeterDisplayModelA!.user.id})).data;
+      this._userDisplayPostClick(duel);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
-  tweeterDisplayBClicked() {
-    this._userDisplayPostClick();
-    this.isDisplayWin = false;
+  async tweeterDisplayBClicked() {
+    try {
+      const duel: Duel =  (await axios.patch(`${config.api_url}/duels/${this.duel!.id}`, {UserProposalTweeterId : this.tweeterDisplayModelB!.user.id})).data;
+      this._userDisplayPostClick(duel);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   nextDuelClicked() {
     this.initNextDuel();
   }
 
-  private _userDisplayPostClick() {
-    this.tweeterDisplayModelA.isSuccess = true;
+  get progressBarValue() : number {
+    if (this.contest) {
+      return this.contest.previousDuelsIds.length / 
+      (this.contest.nextDuelsIds.length + this.contest.previousDuelsIds.length)
+       * 100;
+    }
+    return 0;
+  }
+
+  get remainingDuels() : number {
+    if (this.contest) {
+      return this.contest.nextDuelsIds.length;
+    }
+    return 0;
+  }
+
+  private _userDisplayPostClick(duel: Duel) {
+    this.isDisplayWin = duel.isWin;
+    this.tweeterDisplayModelA!.isSuccess = duel.responseTweeterId === this.tweeterDisplayModelA!.user.id;
+    this.tweeterDisplayModelB!.isSuccess = duel.responseTweeterId === this.tweeterDisplayModelB!.user.id;
     this.isDisplayOr = false;
-    this.tweeterDisplayModelA.hasResponse = true;
-    this.tweeterDisplayModelB.hasResponse = true;
+    this.tweeterDisplayModelA!.likes = duel.tweeterALikes;
+    this.tweeterDisplayModelB!.likes = duel.tweeterBLikes;
+    this.tweeterDisplayModelA!.hasResponse = true;
+    this.tweeterDisplayModelB!.hasResponse = true;
     this.isUserDisplayHasResponse = true;
+    // eslint-disable-next-line no-debugger
+    this.contest!.previousDuelsIds.push(this.contest!.nextDuelsIds.shift() as string);
   }
 }
 
 interface Contest {
   id: string;
-  pastDuelIds: string[];
+  previousDuelsIds: string[];
   nextDuelsIds: string[];
 }
 interface Duel {
@@ -182,6 +201,8 @@ interface Duel {
   userProposalTweeterId: string | null;
   tweeterALikes: number | null;
   tweeterBLikes: number | null;
+  isWin: boolean;
+  responseTweeterId: string;
 }
 interface Tweeter {
   id: string;
